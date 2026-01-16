@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Poker Tracker</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+  <style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 30px;
+  }
+  input, button {
+    margin: 5px;
+  }
+  /* Highlight the current player */
+  .current-player {
+    background-color: #6b716eff; /* light green */
+    font-weight: bold;
+  }
+</style>
+
+</head>
+
+<body>
+    let myName = "";
+  <h1>Poker Chip Tracker</h1>
+  <h2 id="pot">Pot: 0</h2>
+  <h3>Current Turn: <span id="currentTurn">None</span></h3>
+  <h3>Round: <span id="round">preflop</span></h3>
+  <h4>Dealer: <span id="dealer">None</span></h4>
+  <div id="communityCards">Community Cards: </div>
+
+
+<div id="join">
+  <input id="name" placeholder="Your Name">
+  <input id="room" placeholder="Room Code">
+  <button onclick="joinRoom()">Join</button>
+</div>
+
+<h2>Lobby</h2>
+<ul id="players"></ul>
+
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+const socket = io();
+
+function joinRoom() {
+  const name = document.getElementById("name").value;
+  const room = document.getElementById("room").value;
+  if (!name || !room) {
+    alert("Enter both name and room code!");
+    return;
+  }
+  myName = name; // store your name
+  socket.emit("join_room", { name, room });
+}
+
+socket.on("room_update", data => {
+  console.log("Room update received:", data);
+  const list = document.getElementById("players");
+  list.innerHTML = "";
+  data.players.forEach(p => {
+    const li = document.createElement("li");
+    li.textContent = `${p.name} — ${p.chips} chips`;
+    list.appendChild(li);
+  });
+
+  const potDisplay = document.getElementById("pot");
+  if(potDisplay){
+    potDisplay.textContent = `Pot: ${data.pot}`;
+  }
+
+  const dealerDisplay = document.getElementById("dealer");
+if(dealerDisplay){
+    dealerDisplay.textContent = data.dealer;
+}
+
+const communityDiv = document.getElementById("communityCards");
+if(communityDiv) communityDiv.textContent = "Community Cards: " + (data.community_cards.join(", ") || "None");
+
+document.getElementById("round").textContent = data.round;
+
+
+  // Update current turn display
+  const turnDisplay = document.getElementById("currentTurn");
+  if(turnDisplay) turnDisplay.textContent = data.current_turn || "None";
+
+  const isMyTurn = myName === data.current_turn;
+
+document.getElementById("checkBtn").disabled = !isMyTurn;
+document.getElementById("callBtn").disabled = !isMyTurn;
+document.getElementById("foldBtn").disabled = !isMyTurn;
+document.getElementById("raiseBtn").disabled = !isMyTurn;
+document.getElementById("raiseAmount").disabled = !isMyTurn;
+
+});
+
+socket.on("connect", () => {
+  console.log("Connected to server, socket id:", socket.id);
+});
+
+socket.on("hand_over", data => {
+  alert(`${data.winner} wins the pot!`);
+  console.log("Hand over:", data);
+});
+</script>
+<button onclick="startHand()">Start Hand</button>
+
+<script>
+function startHand() {
+  const roomCode = document.getElementById("room").value;
+  socket.emit("start_hand", { code: roomCode });
+}
+</script>
+
+<div id="actions">
+  <button id="checkBtn" onclick="doAction('check')">Check</button>
+  <button id="callBtn" onclick="doAction('call')">Call</button>
+  <button id="foldBtn" onclick="doAction('fold')">Fold</button>
+
+  <input type="number" id="raiseAmount" placeholder="Raise amount">
+  <button id="raiseBtn" onclick="doAction('raise')">Raise</button>
+</div>
+
+
+<script>
+function doAction(action) {
+  const room = document.getElementById("room").value;
+  let amount = 0;
+
+  if (action === "raise") {
+    amount = parseInt(document.getElementById("raiseAmount").value) || 0;
+  }
+
+  socket.emit("action", { room, action, amount });
+}
+
+</script>
+
+
+</body>
+</html>
