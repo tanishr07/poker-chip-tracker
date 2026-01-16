@@ -4,17 +4,47 @@
   <title>Poker Tracker</title>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
+  <!-- ================================================================ -->
+  <!-- STYLES -->
+  <!-- ================================================================ -->
   <style>
   body {
     font-family: Arial, sans-serif;
     margin: 30px;
+    display: flex;
+    gap: 30px;
+  }
+  #mainContent {
+    flex: 1;
+  }
+  #logContainer {
+    width: 300px;
+    border-left: 2px solid #ccc;
+    padding-left: 20px;
+  }
+  #actionLog {
+    list-style: none;
+    padding: 0;
+    max-height: 600px;
+    overflow-y: auto;
+    background: #f5f5f5;
+    padding: 10px;
+    border-radius: 5px;
+  }
+  #actionLog li {
+    padding: 5px 0;
+    border-bottom: 1px solid #ddd;
+    font-size: 14px;
+  }
+  #actionLog li:last-child {
+    border-bottom: none;
   }
   input, button {
     margin: 5px;
   }
   /* Highlight the current player */
   .current-player {
-    background-color: #6b716eff; /* light green */
+    background-color: #6b716eff;
     font-weight: bold;
   }
 </style>
@@ -22,7 +52,22 @@
 </head>
 
 <body>
-    let myName = "";
+
+<!-- ================================================================ -->
+<!-- MAIN CONTENT AREA -->
+<!-- ================================================================ -->
+<div id="mainContent">
+  
+  <!-- Global variables -->
+  <script>
+    //let myName = "";      // Store current user's name
+    let isLeader = false; // Track if current user is room leader
+    let inRoom = false;  // Track if user is in a room
+  </script>
+  
+  <!-- ============================================================== -->
+  <!-- GAME INFO DISPLAY -->
+  <!-- ============================================================== -->
   <h1>Poker Chip Tracker</h1>
   <h2 id="pot">Pot: 0</h2>
   <h3>Current Turn: <span id="currentTurn">None</span></h3>
@@ -30,113 +75,389 @@
   <h4>Dealer: <span id="dealer">None</span></h4>
   <div id="communityCards">Community Cards: </div>
 
+  <!-- ============================================================== -->
+  <!-- ROOM JOIN/CREATE CONTROLS -->
+  <!-- ============================================================== -->
+  <div id="join">
+    <input id="name" placeholder="Your Name">
+    <input id="room" placeholder="Room Code">
+    <button onclick="joinRoom()">Join Room</button>
+    <button onclick="createRoom()">Create New Room</button>
+    <button id="gameSettingsButton" onclick="openConfig()">Game Settings</button>
+    <button onclick="leaveRoom()">Leave Room</button>
+    <p id="roomCode" style="font-weight: bold; color: green;"></p>
+  </div>
 
-<div id="join">
-  <input id="name" placeholder="Your Name">
-  <input id="room" placeholder="Room Code">
-  <button onclick="joinRoom()">Join</button>
-</div>
+  <!-- ============================================================== -->
+  <!-- PLAYER LOBBY -->
+  <!-- ============================================================== -->
+  <h2>Lobby</h2>
+  <ul id="players"></ul>
 
-<h2>Lobby</h2>
-<ul id="players"></ul>
+  <!-- ============================================================== -->
+  <!-- GAME SETTINGS PANEL (LEADER ONLY) -->
+  <!-- ============================================================== -->
+  <div id="gameConfig" style="display: none; background: #f0f0f0; padding: 15px; margin: 10px 0; border-radius: 5px;">
+    <h3>⚙️ Game Settings (Leader Only)</h3>
+    <label>Starting Chips: <input type="number" id="startingChips" value="1000" min="100" step="100"></label><br>
+    <label>Small Blind: <input type="number" id="smallBlind" value="5" min="1"></label><br>
+    <label>Big Blind: <input type="number" id="bigBlind" value="10" min="1"></label><br>
+    <button onclick="configureGame()">Apply Settings</button>
+    <button onclick="closeConfig()">Close</button>
+    <p id="configStatus" style="color: green; font-weight: bold;"></p>
+  </div>
 
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-<script>
-const socket = io();
+  <!-- ================================================================ -->
+  <!-- SOCKET.IO SETUP & EVENT LISTENERS -->
+  <!-- ================================================================ -->
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+  const socket = io();
 
-function joinRoom() {
-  const name = document.getElementById("name").value;
-  const room = document.getElementById("room").value;
-  if (!name || !room) {
-    alert("Enter both name and room code!");
-    return;
-  }
-  myName = name; // store your name
-  socket.emit("join_room", { name, room });
-}
-
-socket.on("room_update", data => {
-  console.log("Room update received:", data);
-  const list = document.getElementById("players");
-  list.innerHTML = "";
-  data.players.forEach(p => {
-    const li = document.createElement("li");
-    li.textContent = `${p.name} — ${p.chips} chips`;
-    list.appendChild(li);
+  // ----------------------------------------------------------------
+  // CONNECTION EVENT LISTENERS
+  // ----------------------------------------------------------------
+  
+  /**
+   * Fired when client connects to server
+   */
+  socket.on("connect", () => {
+    console.log("Connected to server, socket id:", socket.id);
   });
 
-  const potDisplay = document.getElementById("pot");
-  if(potDisplay){
-    potDisplay.textContent = `Pot: ${data.pot}`;
+  /**
+   * Display error messages from server
+   */
+  socket.on("error", data => {
+    alert("Error: " + data.message);
+  });
+
+  // ----------------------------------------------------------------
+  // ROOM EVENT LISTENERS
+  // ----------------------------------------------------------------
+  
+  /**
+   * Response after creating a new room
+   * Fills in room code and displays to share with others
+   */
+  socket.on("room_created", data => {
+    inRoom = true;
+    console.log("Room created:", data.code);
+    document.getElementById("room").value = data.code;
+    document.getElementById("roomCode").textContent = `Room Code: ${data.code} (Share with others!)`;
+  });
+  /**
+   * Main state update - fired after any room change
+   * Updates all UI elements based on server state
+   */
+  socket.on("room_update", data => {
+    if (!inRoom) {
+      return;
+    }
+    inRoom = true;
+    console.log("Room update received:", data);
+    
+    // Determine if current user is the leader
+    isLeader = (socket.id === data.leader_sid);
+    
+    // --- UPDATE GAME CONFIG PANEL VISIBILITY ---
+    // Show if: leader AND (hand not started OR manually opened)
+    const configDiv = document.getElementById("gameConfig");
+    if (isLeader && (!data.hand_started || data.show_config)) {
+      configDiv.style.display = "block";
+    } else {
+      configDiv.style.display = "none";
+    }
+    
+    // Display configured settings
+    if (data.game_configured) {
+      document.getElementById("configStatus").textContent = 
+        `✅ Game configured: ${data.starting_chips} chips, Blinds ${data.small_blind}/${data.big_blind}`;
+    }
+    
+    // --- UPDATE WINNER SELECTION VISIBILITY (LEADER ONLY) ---
+    const winnerDiv = document.getElementById("winnerSelection");
+    if (isLeader) {
+      winnerDiv.style.display = "block";
+    } else {
+      winnerDiv.style.display = "none";
+    }
+    
+    // --- UPDATE PLAYER LIST ---
+    const list = document.getElementById("players");
+    list.innerHTML = "";
+    data.players.forEach(p => {
+      const li = document.createElement("li");
+      li.textContent = `${p.name} — ${p.chips} chips`;
+      list.appendChild(li);
+    });
+    
+    // --- UPDATE WINNER DROPDOWN OPTIONS ---
+    const dropdown = document.getElementById("winnerDropdown");
+    dropdown.innerHTML = '<option value="">Select Winner...</option>';
+    data.players.forEach(p => {
+      const option = document.createElement("option");
+      option.value = p.name;
+      option.textContent = p.name;
+      dropdown.appendChild(option);
+    });
+
+    // --- UPDATE GAME STATE DISPLAYS ---
+    const potDisplay = document.getElementById("pot");
+    if (potDisplay) {
+      potDisplay.textContent = `Pot: ${data.pot}`;
+    }
+
+    const dealerDisplay = document.getElementById("dealer");
+    if (dealerDisplay) {
+      dealerDisplay.textContent = data.dealer;
+    }
+
+    const communityDiv = document.getElementById("communityCards");
+    if (communityDiv) {
+      communityDiv.textContent = "Community Cards: " + (data.community_cards.join(", ") || "None");
+    }
+
+    document.getElementById("round").textContent = data.round;
+
+    const turnDisplay = document.getElementById("currentTurn");
+    if (turnDisplay) {
+      turnDisplay.textContent = data.current_turn || "None";
+    }
+
+    // --- ENABLE/DISABLE ACTION BUTTONS BASED ON TURN ---
+    const isMyTurn = myName === data.current_turn;
+    document.getElementById("checkBtn").disabled = !isMyTurn;
+    document.getElementById("callBtn").disabled = !isMyTurn;
+    document.getElementById("foldBtn").disabled = !isMyTurn;
+    document.getElementById("raiseBtn").disabled = !isMyTurn;
+    document.getElementById("raiseAmount").disabled = !isMyTurn;
+    
+    // Hide game settings button for non-leaders
+    if (!isLeader) {
+      document.getElementById("gameSettingsButton").style.display = "none";
+    }
+  });
+
+  // ----------------------------------------------------------------
+  // HAND EVENT LISTENERS
+  // ----------------------------------------------------------------
+  
+  /**
+   * Fired when a hand ends with a winner
+   * Shows alert with winner name
+   */
+  socket.on("hand_over", data => {
+    alert(`${data.winner} wins the pot!`);
+    console.log("Hand over:", data);
+  });
+
+  // ----------------------------------------------------------------
+  // ACTION LOG EVENT LISTENER
+  // ----------------------------------------------------------------
+  
+  /**
+   * Add new action message to the log
+   * Auto-scrolls to show latest message
+   */
+  socket.on("action_log", data => {
+    const log = document.getElementById("actionLog");
+    const li = document.createElement("li");
+    li.textContent = data.message;
+    log.appendChild(li);
+    // Auto-scroll to bottom
+    log.scrollTop = log.scrollHeight;
+  });
+
+  </script>
+
+  <!-- ================================================================ -->
+  <!-- CLIENT FUNCTIONS - ROOM MANAGEMENT -->
+  <!-- ================================================================ -->
+  <script>
+  
+  /**
+   * Join an existing room with a code
+   */
+  function joinRoom() {
+    inRoom = true;
+    const name = document.getElementById("name").value;
+    const room = document.getElementById("room").value;
+    if (!name || !room) {
+      alert("Enter both name and room code!");
+      return;
+    }
+    myName = name; // Store for turn validation
+    socket.emit("join_room", { name, room });
   }
 
-  const dealerDisplay = document.getElementById("dealer");
-if(dealerDisplay){
-    dealerDisplay.textContent = data.dealer;
-}
+  /**
+   * Create a new room with random code
+   * Creator becomes room leader
+   */
+  function createRoom() {
+    const name = document.getElementById("name").value;
+    if (!name) {
+      alert("Enter your name first!");
+      return;
+    }
+    myName = name; // Store for turn validation
+    socket.emit("create_room", { name });
+  }
 
-const communityDiv = document.getElementById("communityCards");
-if(communityDiv) communityDiv.textContent = "Community Cards: " + (data.community_cards.join(", ") || "None");
+  /**
+   * Leave the current room
+   * Triggers server cleanup and player removal
+   */
+  function leaveRoom() {
+    inRoom = false;
 
-document.getElementById("round").textContent = data.round;
+    console.log("1. Leaving room");
+    const room = document.getElementById("room").value;
 
+    const list = document.getElementById("players");
+    list.innerHTML = "";
+    console.log("2. Cleared player list");
 
-  // Update current turn display
-  const turnDisplay = document.getElementById("currentTurn");
-  if(turnDisplay) turnDisplay.textContent = data.current_turn || "None";
+    socket.emit("leave_room", { room });
+    console.log("3. Emitted leave_room event");
+  }
 
-  const isMyTurn = myName === data.current_turn;
+  </script>
 
-document.getElementById("checkBtn").disabled = !isMyTurn;
-document.getElementById("callBtn").disabled = !isMyTurn;
-document.getElementById("foldBtn").disabled = !isMyTurn;
-document.getElementById("raiseBtn").disabled = !isMyTurn;
-document.getElementById("raiseAmount").disabled = !isMyTurn;
+  <!-- ================================================================ -->
+  <!-- CLIENT FUNCTIONS - GAME CONFIGURATION -->
+  <!-- ================================================================ -->
+  <script>
+  
+  /**
+   * Open the game settings panel (leader only)
+   * Uses server-driven UI pattern
+   */
+  function openConfig() {
+    const room = document.getElementById("room").value;
+    socket.emit("open_config", { room });
+  }
 
-});
+  /**
+   * Close the game settings panel (leader only)
+   */
+  function closeConfig() {
+    const room = document.getElementById("room").value;
+    socket.emit("close_config", { room });
+  }
 
-socket.on("connect", () => {
-  console.log("Connected to server, socket id:", socket.id);
-});
+  /**
+   * Apply game settings: starting chips and blind amounts
+   * Leader only - sets values for entire room
+   */
+  function configureGame() {
+    const room = document.getElementById("room").value;
+    const starting_chips = document.getElementById("startingChips").value;
+    const small_blind = document.getElementById("smallBlind").value;
+    const big_blind = document.getElementById("bigBlind").value;
+    
+    if (!room) {
+      alert("Join a room first!");
+      return;
+    }
+    
+    socket.emit("configure_game", { room, starting_chips, small_blind, big_blind });
+  }
 
-socket.on("hand_over", data => {
-  alert(`${data.winner} wins the pot!`);
-  console.log("Hand over:", data);
-});
-</script>
-<button onclick="startHand()">Start Hand</button>
+  </script>
 
-<script>
-function startHand() {
-  const roomCode = document.getElementById("room").value;
-  socket.emit("start_hand", { code: roomCode });
-}
-</script>
+  <!-- ================================================================ -->
+  <!-- HAND CONTROLS (LEADER ONLY) -->
+  <!-- ================================================================ -->
+  
+  <button onclick="startHand()">Start Hand</button>
 
-<div id="actions">
-  <button id="checkBtn" onclick="doAction('check')">Check</button>
-  <button id="callBtn" onclick="doAction('call')">Call</button>
-  <button id="foldBtn" onclick="doAction('fold')">Fold</button>
+  <div id="winnerSelection" style="margin-top: 20px;">
+    <h3>Declare Winner</h3>
+    <select id="winnerDropdown">
+      <option value="">Select Winner...</option>
+    </select>
+    <button onclick="declareWinner()">Award Pot</button>
+  </div>
 
-  <input type="number" id="raiseAmount" placeholder="Raise amount">
-  <button id="raiseBtn" onclick="doAction('raise')">Raise</button>
+  <!-- ================================================================ -->
+  <!-- CLIENT FUNCTIONS - HAND MANAGEMENT -->
+  <!-- ================================================================ -->
+  <script>
+  
+  /**
+   * Start a new hand
+   * Rotates dealer, posts blinds, resets betting
+   */
+  function startHand() {
+    const roomCode = document.getElementById("room").value;
+    socket.emit("start_hand", { code: roomCode });
+  }
+
+  /**
+   * Manually declare a winner and award pot
+   * Leader only - for chip tracking without cards
+   */
+  function declareWinner() {
+    const room = document.getElementById("room").value;
+    const winner = document.getElementById("winnerDropdown").value;
+    
+    if (!winner) {
+      alert("Please select a winner!");
+      return;
+    }
+    
+    socket.emit("declare_winner", { room, winner });
+  }
+
+  </script>
+
+  <!-- ================================================================ -->
+  <!-- PLAYER ACTION CONTROLS -->
+  <!-- ================================================================ -->
+  
+  <div id="actions">
+    <button id="checkBtn" onclick="doAction('check')">Check</button>
+    <button id="callBtn" onclick="doAction('call')">Call</button>
+    <button id="foldBtn" onclick="doAction('fold')">Fold</button>
+
+    <input type="number" id="raiseAmount" placeholder="Raise amount">
+    <button id="raiseBtn" onclick="doAction('raise')">Raise</button>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- CLIENT FUNCTIONS - PLAYER ACTIONS -->
+  <!-- ================================================================ -->
+  <script>
+  
+  /**
+   * Send a player action (fold, check, call, raise)
+   * Server validates turn order before processing
+   */
+  function doAction(action) {
+    const room = document.getElementById("room").value;
+    let amount = 0;
+
+    // Get raise amount if raising
+    if (action === "raise") {
+      amount = parseInt(document.getElementById("raiseAmount").value) || 0;
+    }
+
+    socket.emit("action", { room, action, amount });
+  }
+
+  </script>
+  
 </div>
 
-
-<script>
-function doAction(action) {
-  const room = document.getElementById("room").value;
-  let amount = 0;
-
-  if (action === "raise") {
-    amount = parseInt(document.getElementById("raiseAmount").value) || 0;
-  }
-
-  socket.emit("action", { room, action, amount });
-}
-
-</script>
-
+<!-- ================================================================ -->
+<!-- ACTION LOG SIDEBAR -->
+<!-- ================================================================ -->
+<div id="logContainer">
+  <h2>Action Log</h2>
+  <ul id="actionLog"></ul>
+</div>
 
 </body>
 </html>
