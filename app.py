@@ -5,6 +5,7 @@
 
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO, join_room
+from flask_cors import CORS
 from game import Player, PokerRoom
 import random
 import string
@@ -15,7 +16,8 @@ import string
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret"
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins=["http://localhost:5173", "http://localhost:3000", "http://localhost:5000"])
+CORS(app)
 
 # Global dictionary to track all active rooms: {room_code: PokerRoom}
 rooms = {}
@@ -73,9 +75,10 @@ def handle_join(data):
     code = data["room"]
     global rooms
 
-    # Create room if it doesn't exist (for manually entered codes)
+    # Validate that the room code exists
     if code not in rooms:
-        rooms[code] = PokerRoom(code)
+        socketio.emit('join_error', {'message': f'Room code "{code}" does not exist. Please check the code and try again.'})
+        return
 
     room = rooms[code]
     player = Player(request.sid, name, starting_chips=room.starting_chips)
@@ -130,9 +133,9 @@ def handle_configure_game(data):
     Only the room leader can configure these settings.
     """
     room_code = data["room"]
-    starting_chips = int(data["starting_chips"])
-    small_blind = int(data["small_blind"])
-    big_blind = int(data["big_blind"])
+    starting_chips = float(data["starting_chips"])
+    small_blind = float(data["small_blind"])
+    big_blind = float(data["big_blind"])
     
     room = rooms.get(room_code)
     if not room:
@@ -146,7 +149,7 @@ def handle_configure_game(data):
     room.configure_game(starting_chips, small_blind, big_blind)
     
     # Log and broadcast updated settings
-    socketio.emit("action_log", {"message": f"⚙️ Game configured: {starting_chips} chips, Blinds {small_blind}/{big_blind}"}, room=room_code)
+    socketio.emit("action_log", {"message": f"⚙️ Game configured: ${starting_chips:.2f} starting, Blinds ${small_blind:.2f}/${big_blind:.2f}"}, room=room_code)
     socketio.emit("room_update", room.serialize(), room=room_code)
 
 @socketio.on("open_config")
@@ -213,8 +216,8 @@ def handle_start_hand(data):
 
     # Log and broadcast
     socketio.emit("action_log", {"message": f"--- New Hand Started ---"}, room=code)
-    socketio.emit("action_log", {"message": f"{sb.name} posts small blind ({room.small_blind_amount})"}, room=code)
-    socketio.emit("action_log", {"message": f"{bb.name} posts big blind ({room.big_blind_amount})"}, room=code)
+    socketio.emit("action_log", {"message": f"{sb.name} posts small blind (${room.small_blind_amount:.2f})"}, room=code)
+    socketio.emit("action_log", {"message": f"{bb.name} posts big blind (${room.big_blind_amount:.2f})"}, room=code)
     socketio.emit("room_update", room.serialize(), room=code)
 
 @socketio.on("declare_winner")
@@ -250,7 +253,7 @@ def handle_declare_winner(data):
     room.round = "done"
     
     # Log and broadcast
-    socketio.emit("action_log", {"message": f"💰 {winner_name} wins {pot_amount} chips!"}, room=room_code)
+    socketio.emit("action_log", {"message": f"💰 {winner_name} wins ${pot_amount:.2f}!"}, room=room_code)
     socketio.emit("room_update", room.serialize(), room=room_code)
     socketio.emit("hand_over", {"winner": winner_name, "pot": pot_amount}, room=room_code)
 
@@ -307,7 +310,7 @@ def handle_action(data):
             return  # Not enough chips
         # Reset players to act (everyone except raiser needs to respond)
         room.players_to_act = {p.sid for p in room.in_hand if p.sid != player.sid}
-        socketio.emit("action_log", {"message": f"{player.name} raises {amount}"}, room=room_code)
+        socketio.emit("action_log", {"message": f"{player.name} raises ${amount:.2f}"}, room=room_code)
 
     # ========================================================================
     # TURN CONTROL LOGIC - Single point of control for game flow

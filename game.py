@@ -13,14 +13,14 @@ class Player:
     Tracks their socket ID, name, and chip count.
     """
     
-    def __init__(self, sid, name, starting_chips=1000):
+    def __init__(self, sid, name, starting_chips=10):
         """
         Initialize a new player.
         
         Args:
             sid: Socket.IO session ID (unique identifier)
             name: Player's display name
-            starting_chips: Initial chip count (default: 1000)
+            starting_chips: Initial chip count (default: 10)
         """
         self.sid = sid
         self.name = name
@@ -81,9 +81,9 @@ class PokerRoom:
         self.show_config = False  # Whether to show settings panel (leader only)
         
         # Configurable settings
-        self.starting_chips = 1000
-        self.small_blind_amount = 5
-        self.big_blind_amount = 10
+        self.starting_chips = 10.00
+        self.small_blind_amount = 0.10
+        self.big_blind_amount = 0.20
         self.game_configured = False  # Whether leader has set custom settings
 
     # ========================================================================
