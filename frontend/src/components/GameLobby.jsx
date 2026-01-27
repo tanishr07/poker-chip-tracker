@@ -25,8 +25,8 @@ export default function GameLobby({ onCreateRoom, onJoinRoom }) {
   return (
     <div className="lobby-container">
       <div className="lobby-card card-glass">
-        <h1 className="lobby-title">🎰 Poker Chip Tracker</h1>
-        <p className="lobby-subtitle">Multiplayer Poker | Real-time Tracking</p>
+        <h1 className="lobby-title">Poker Chip Tracker</h1>
+        <p className="lobby-subtitle">Play poker without the mess</p>
 
         <div className="input-group">
           <label htmlFor="playerName">Your Name</label>
@@ -76,6 +76,7 @@ export default function GameLobby({ onCreateRoom, onJoinRoom }) {
                 maxLength="5"
               />
             </div>
+            <p className="tab-description">Join an existing game using a room code</p>            
             <button className="btn-primary join-btn" onClick={handleJoinClick}>
               Join Room
             </button>
@@ -84,7 +85,7 @@ export default function GameLobby({ onCreateRoom, onJoinRoom }) {
       </div>
 
       <div className="lobby-footer">
-        <p>No database needed • Real-time updates • In-memory tracking</p>
+        <p>Built in Blinds • Real-time updates • In-memory tracking</p>
       </div>
     </div>
   )

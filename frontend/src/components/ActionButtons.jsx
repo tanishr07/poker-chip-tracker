@@ -34,7 +34,7 @@ export default function ActionButtons({ socket, roomCode, gameState, playerName,
       <h3>🎮 Game Controls</h3>
 
       {isLeader && !gameState?.hand_started && (
-        <button className="btn-primary full-width" onClick={handleStartHand}>
+        <button className="card-glass-button full-width" onClick={handleStartHand}>
           Start Hand
         </button>
       )}
@@ -42,21 +42,21 @@ export default function ActionButtons({ socket, roomCode, gameState, playerName,
       {canAct && (
         <div className="actions-group">
           <button
-            className="btn-primary action-btn"
+            className="card-glass-button action-btn"
             disabled={!canAct}
             onClick={() => handleAction('fold')}
           >
             Fold
           </button>
           <button
-            className="btn-primary action-btn"
+            className="card-glass-button action-btn"
             disabled={!canAct}
             onClick={() => handleAction('check')}
           >
             Check
           </button>
           <button
-            className="btn-primary action-btn"
+            className="card-glass-button action-btn"
             disabled={!canAct || gameState?.call_amount === 0}
             onClick={() => handleAction('call')}
           >
@@ -76,7 +76,7 @@ export default function ActionButtons({ socket, roomCode, gameState, playerName,
             onChange={(e) => setRaiseAmount(e.target.value)}
           />
           <button
-            className="btn-primary raise-btn"
+            className="card-glass-button raise-btn"
             disabled={!canAct || !raiseAmount}
             onClick={() => handleAction('raise')}
           >
@@ -106,7 +106,7 @@ export default function ActionButtons({ socket, roomCode, gameState, playerName,
             ))}
           </select>
           <button
-            className="btn-primary full-width"
+            className="card-glass-button full-width"
             disabled={!selectedWinner}
             onClick={handleDeclareWinner}
           >

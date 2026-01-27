@@ -4,7 +4,7 @@ export default function GameInfo({ gameState, playerName }) {
   return (
     <div className="game-info-container">
       <div className="info-card pot-display">
-        <span>💰 Pot</span>
+        <span>Pot</span>
         <div className="pot-amount">${gameState?.pot?.toFixed(2) || '0.00'}</div>
       </div>
 
@@ -20,7 +20,13 @@ export default function GameInfo({ gameState, playerName }) {
 
       <div className={`info-card ${isMyTurn ? 'your-turn' : ''}`}>
         <div className="info-label">Current Turn</div>
-        <div className="info-value">{isMyTurn ? '👈 YOU' : gameState?.current_turn || 'None'}</div>
+        <div className="info-value">{isMyTurn ? 'Your Turn' : gameState?.current_turn || 'None'}</div>
+      </div>
+
+      <div className="info-card">
+        <div className="info-label">Player</div>
+        <div className="info-value">{playerName || 'None'}</div>
+        
       </div>
     </div>
   )

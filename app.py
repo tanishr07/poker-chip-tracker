@@ -75,7 +75,7 @@ def handle_join(data):
     code = data["room"]
     global rooms
 
-    # Validate that the room code exists
+    #validate room code exists
     if code not in rooms:
         socketio.emit('join_error', {'message': f'Room code "{code}" does not exist. Please check the code and try again.'})
         return
@@ -83,14 +83,14 @@ def handle_join(data):
     room = rooms[code]
     player = Player(request.sid, name, starting_chips=room.starting_chips)
 
-    # Check if room is full (max 10 players)
+    #check if room is full
     if not room.add_player(player):
-        return  # Room full - silently reject
+        return  
 
     join_room(code)
     print(f"{name} joined room {code} (SID {request.sid})")
     
-    # Log and broadcast to all players in room
+    #broadcast
     socketio.emit("action_log", {"message": f"{name} has joined the room."}, room=code)
     socketio.emit("room_update", room.serialize(), room=code)
 
@@ -105,20 +105,20 @@ def handle_leave_room(data):
     if not room:
         return
 
-    # Find player to remove
+    #find player
     player = next((p for p in room.players if p.sid == request.sid), None)
     if not player:
         return
 
     room.remove_player(request.sid)
     
-    # Clean up empty room
+    #clean up empty room
     if len(room.players) == 0:
         del rooms[room_code]
         socketio.emit("action_log", {"message": f"Room {room_code} has been closed as the last player left."})
         return
     
-    # Notify remaining players
+    #broadcast
     socketio.emit("action_log", {"message": f"{player.name} has left the room."}, room=room_code)
     socketio.emit("room_update", room.serialize(), room=room_code)
 
@@ -141,14 +141,14 @@ def handle_configure_game(data):
     if not room:
         return
     
-    # Permission check: Only leader can configure
+    #check if leader
     if room.leader_sid != request.sid:
         socketio.emit("error", {"message": "Only the room leader can configure settings"}, room=request.sid)
         return
     
     room.configure_game(starting_chips, small_blind, big_blind)
     
-    # Log and broadcast updated settings
+    #broadcast
     socketio.emit("action_log", {"message": f"⚙️ Game configured: ${starting_chips:.2f} starting, Blinds ${small_blind:.2f}/${big_blind:.2f}"}, room=room_code)
     socketio.emit("room_update", room.serialize(), room=room_code)
 

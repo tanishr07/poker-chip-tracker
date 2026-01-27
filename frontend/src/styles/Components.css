@@ -1,3 +1,6 @@
+/* Contains styles for player list, action 
+buttons, action log, and game info components */
+
 .player-list-container,
 .action-buttons-container,
 .action-log-container {
@@ -17,6 +20,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  overflow-y: auto;
 }
 
 .player-card {
@@ -28,13 +32,11 @@
 }
 
 .player-card.current {
-  background: rgba(255, 216, 155, 0.2);
-  border-left-color: #ffd89b;
+  background: rgba(233, 229, 13, 0.277);
 }
 
 .player-card.active-turn {
-  background: rgba(102, 126, 234, 0.3);
-  border-left-color: #ffd89b;
+  background: rgba(177, 234, 102, 0.3);
 }
 
 .player-name {
@@ -44,7 +46,8 @@
 
 .player-chips {
   font-size: 0.9em;
-  color: #ffd89b;
+  font-weight: 500;
+  color: #000000;
 }
 
 .game-info-container {
@@ -64,15 +67,16 @@
 }
 
 .info-card.your-turn {
-  background: rgba(255, 216, 155, 0.2);
-  border-color: #ffd89b;
+  background:rgba(5, 179, 46, 0.277);
+  border-color: #a0ff9b;
 }
 
 .pot-display {
   grid-column: 1 / -1;
-  background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+  background: rgba(102, 126, 234, 0.2);
   padding: 20px;
   font-size: 1.2em;
+  opacity: 100;
 }
 
 .pot-amount {

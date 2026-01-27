@@ -8,21 +8,22 @@
   box-sizing: border-box;
 }
 
-body {
+html, body {
   background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
   color: #333;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  min-height: 100%;
+  overflow: hidden;
+}
+
+.poker-table { /* Poker table background style */
+  background: linear-gradient(-135deg, #000000 0%, #5E5B52 100%);
+  padding: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   min-height: 100vh;
 }
 
-.poker-table {
-  background: linear-gradient(135deg, #0f5132 0%, #138d3a 100%);
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-}
-
-.card-glass {
+.card-glass { /* Glassmorphism card style */
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.18);
@@ -31,7 +32,7 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #000000 0%, #5E5B52 100%);
   color: white;
   padding: 10px 20px;
   border: none;
@@ -39,6 +40,23 @@ body {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+}
+
+.card-glass-button{
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 10px 20px;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card-glass-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
 .btn-primary:hover {
@@ -87,13 +105,11 @@ body {
   border-radius: 10px;
   padding: 12px;
   margin: 8px 0;
-  border-left: 4px solid #667eea;
   transition: all 0.3s ease;
 }
 
 .player-card.current {
-  background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
-  border-left-color: #ffd89b;
+  background: rgba(5, 179, 46, 0.411);
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
@@ -117,7 +133,7 @@ body {
 }
 
 .pot-display {
-  background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+  background: linear-gradient(-135deg, #000000 0%, #5E5B52 100%);
   padding: 16px;
   border-radius: 10px;
   text-align: center;

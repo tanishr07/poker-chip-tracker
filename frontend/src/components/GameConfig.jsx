@@ -20,9 +20,9 @@ export default function GameConfig({ socket, roomCode, gameState }) {
 
   return (
     <div className="game-config">
-      <h3>⚙️ Game Settings</h3>
+      <h3>Game Settings</h3>
       <div className="config-input-group">
-        <label>Starting Chips</label>
+        <label>Starting Chips:</label>
         <input
           type="number"
           step="0.01"
@@ -32,7 +32,7 @@ export default function GameConfig({ socket, roomCode, gameState }) {
         />
       </div>
       <div className="config-input-group">
-        <label>Small Blind</label>
+        <label>Small Blind:</label>
         <input
           type="number"
           step="0.01"
@@ -42,7 +42,7 @@ export default function GameConfig({ socket, roomCode, gameState }) {
         />
       </div>
       <div className="config-input-group">
-        <label>Big Blind</label>
+        <label>Big Blind:</label>
         <input
           type="number"
           step="0.01"
@@ -51,7 +51,7 @@ export default function GameConfig({ socket, roomCode, gameState }) {
           onChange={(e) => setBigBlind(parseFloat(e.target.value))}
         />
       </div>
-      <button className="btn-primary full-width" onClick={handleConfigure}>
+      <button className="card-glass-button full-width" onClick={handleConfigure}>
         Apply Settings
       </button>
     </div>

@@ -1,7 +1,7 @@
 export default function ActionLog({ actions }) {
   return (
     <div className="action-log-container">
-      <h3>📋 Action Log</h3>
+      <h3>Action Log</h3>
       <div className="action-log">
         {actions.length === 0 ? (
           <div className="empty-log">No actions yet</div>

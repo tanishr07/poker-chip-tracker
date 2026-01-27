@@ -1,7 +1,7 @@
 export default function PlayerList({ gameState, currentPlayer }) {
   return (
     <div className="player-list-container">
-      <h3>👥 Players</h3>
+      <h3>Players</h3>
       <div className="player-list">
         {gameState?.players?.map((player) => (
           <div
@@ -11,7 +11,7 @@ export default function PlayerList({ gameState, currentPlayer }) {
             }`}
           >
             <div className="player-name">
-              {player.name === currentPlayer && '👤 '}
+              {player.name === currentPlayer}
               {player.name}
               {player.name === gameState.current_turn && ' 🔴'}
             </div>
