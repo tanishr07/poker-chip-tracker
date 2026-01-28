@@ -23,24 +23,11 @@ export default function GameLobby({ onCreateRoom, onJoinRoom }) {
   }
 
   return (
+    <>
     <div className="lobby-container">
-      <div className="lobby-card card-glass">
-        <h1 className="lobby-title">Poker Chip Tracker</h1>
-        <p className="lobby-subtitle">Play poker without the mess</p>
-
-        <div className="input-group">
-          <label htmlFor="playerName">Your Name</label>
-          <input
-            id="playerName"
-            type="text"
-            placeholder="Enter your name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && (tab === 'create' ? handleCreateClick() : handleJoinClick())}
-          />
-        </div>
-
-        <div className="tabs">
+      <h1 className="lobby-title">Poker Chip Tracker</h1>
+      <p className="lobby-subtitle">Play poker without the mess</p>
+      <div className="tabs">
           <button
             className={`tab-btn ${tab === 'create' ? 'active' : ''}`}
             onClick={() => setTab('create')}
@@ -54,39 +41,57 @@ export default function GameLobby({ onCreateRoom, onJoinRoom }) {
             Join Room
           </button>
         </div>
+      <div className="lobby-card card-glass">
+        <div key={tab}>
+          <div className="input-group">
+            <label htmlFor="playerName">Your Name</label>
+            <input
+              id="playerName"
+              type="text"
+              placeholder="Enter your name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && (tab === 'create' ? handleCreateClick() : handleJoinClick())}
+            />
+          </div>
 
-        {tab === 'create' ? (
-          <div className="tab-content">
-            <p className="tab-description">Create a new game and share the code with friends</p>
-            <button className="btn-primary create-btn" onClick={handleCreateClick}>
-              Create New Room
-            </button>
-          </div>
-        ) : (
-          <div className="tab-content">
-            <div className="input-group">
-              <label htmlFor="roomCode">Room Code</label>
-              <input
-                id="roomCode"
-                type="text"
-                placeholder="Enter room code"
-                value={roomCode}
-                onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                onKeyPress={(e) => e.key === 'Enter' && handleJoinClick()}
-                maxLength="5"
-              />
+          {tab === 'create' ? (
+            <div className="tab-content">
+              <p className="tab-description">Create a new game and share the code with friends</p>
+              <button className="btn-primary create-btn" onClick={handleCreateClick}>
+                Create New Room
+              </button>
             </div>
-            <p className="tab-description">Join an existing game using a room code</p>            
-            <button className="btn-primary join-btn" onClick={handleJoinClick}>
-              Join Room
-            </button>
-          </div>
-        )}
+          ) : (
+            <div className="tab-content">
+              <div className="input-group">
+                <label htmlFor="roomCode">Room Code</label>
+                <input
+                  id="roomCode"
+                  type="text"
+                  placeholder="Enter room code"
+                  value={roomCode}
+                  onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                  onKeyPress={(e) => e.key === 'Enter' && handleJoinClick()}
+                  maxLength="5"
+                />
+              </div>
+              <p className="tab-description">Join an existing game using a room code</p>            
+              <button className="btn-primary join-btn" onClick={handleJoinClick}>
+                Join Room
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="lobby-footer">
         <p>Built in Blinds • Real-time updates • In-memory tracking</p>
       </div>
     </div>
+    <div className="windowFooter"> 
+      <p><a href="https://github.com/tanishr07/poker-chip-tracker" target="_blank" rel="noopener noreferrer">GitHub</a></p>
+    </div>
+    </>
   )
 }
