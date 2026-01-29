@@ -31,7 +31,7 @@ export default function ActionButtons({ socket, roomCode, gameState, playerName,
 
   return (
     <div className="action-buttons-container">
-      <h3>🎮 Game Controls</h3>
+      <h3>Game Controls</h3>
 
       {isLeader && !gameState?.hand_started && (
         <button className="card-glass-button full-width" onClick={handleStartHand}>

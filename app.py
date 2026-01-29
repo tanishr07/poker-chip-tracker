@@ -44,24 +44,22 @@ def handle_create_room(data):
     name = data["name"]
     global rooms
     
-    # Generate unique 5-character alphanumeric room code
+    #generate alphanumeric room code
     while True:
         code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
         if code not in rooms:
             break
     
-    # Create room with creator as leader
     rooms[code] = PokerRoom(code, leader_sid=request.sid)
     room = rooms[code]
     
-    # Add creator as first player
+    #makes room creator a player
     player = Player(request.sid, name, starting_chips=room.starting_chips)
     room.add_player(player)
     
     join_room(code)
     print(f"{name} created and joined room {code} (SID {request.sid})")
     
-    # Notify creator and broadcast room state
     socketio.emit("room_created", {"code": code}, room=request.sid)
     socketio.emit("room_update", room.serialize(), room=code)
 
@@ -313,26 +311,16 @@ def handle_action(data):
         socketio.emit("action_log", {"message": f"{player.name} raises ${amount:.2f}"}, room=room_code)
 
     # ========================================================================
-    # TURN CONTROL LOGIC - Single point of control for game flow
+    # GAME FLOW - Centralized turn advancement logic
     # ========================================================================
     
-    # Check if hand is over (only one player left)
-    if room.is_hand_over():
-        winner = room.award_pot_to_winner()
-        socketio.emit("room_update", room.serialize(), room=room_code)
-        if winner:
-            socketio.emit("hand_over", {"winner": winner.name, "pot": 0}, room=room_code)
-            
-    # Check if betting round is complete (all players acted)
-    elif room.betting_round_complete():
-        room.advance_round()
-        socketio.emit("room_update", room.serialize(), room=room_code)
+    game_action = room.process_action_and_advance()
+    socketio.emit("room_update", room.serialize(), room=room_code)
+    
+    if game_action == 'end_hand':
+        socketio.emit("hand_over", {"winner": room.players[0].name if room.in_hand else "Unknown", "pot": 0}, room=room_code)
+    elif game_action == 'advance_round':
         socketio.emit("action_log", {"message": f"--- {room.round.upper()} ---"}, room=room_code)
-        
-    # Continue to next player's turn
-    else:
-        room.advance_turn()
-        socketio.emit("room_update", room.serialize(), room=room_code)
     
     # Debug logging
     print(

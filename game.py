@@ -306,7 +306,29 @@ class PokerRoom:
         while self.players[self.turn_index] not in self.in_hand:
             self.turn_index = (self.turn_index + 1) % n
             if self.turn_index == start:
-                break  # All players folded (shouldn't happen)
+                break  #all players folded
+    
+    def process_action_and_advance(self):
+        """
+        Central method that determines game flow after a player action.
+        Handles: ending hand, advancing to next round, or advancing to next player.
+        
+        Returns:
+            str: The action taken - 'end_hand', 'advance_round', or 'advance_turn'
+        """
+        #checks if one player is left (they get the pot)
+        if self.is_hand_over():
+            self.award_pot_to_winner()
+            return 'end_hand'
+        
+        #checks if complete
+        elif self.betting_round_complete():
+            self.advance_round()
+            return 'advance_round'
+        
+        else:
+            self.advance_turn()
+            return 'advance_turn'
 
     # ========================================================================
     # BETTING ACTIONS
