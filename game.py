@@ -1,6 +1,7 @@
 # ============================================================================
 # POKER CHIP TRACKER - GAME LOGIC
 # Core classes for poker room and player management
+# NOTE: Used CoPilot for code organization and easy understanding
 # ============================================================================
 
 # ============================================================================

@@ -1,6 +1,7 @@
 # ============================================================================
 # POKER CHIP TRACKER - SERVER
 # Flask + Socket.IO backend for real-time multiplayer poker chip tracking
+# NOTE: Used CoPilot for code organization and easy understanding
 # ============================================================================
 
 from flask import Flask, render_template, request
