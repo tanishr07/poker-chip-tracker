@@ -5,12 +5,12 @@ Flask-SocketIO (Backend)
 React + Vite + Tailwind CSS (Frontend)
 
 Features:
-Room security with 5-character codes
-Real-time player updates via Socket.IO
-Track chip counts for each player
-Configurable starting and blind amounts
-Up to 10 players per room
-Action log
+Room security with 5-character codes, 
+Real-time player updates via Socket.IO, 
+Track chip counts for each player, 
+Configurable starting and blind amounts, 
+Up to 10 players per room, 
+Action log, 
 Room Lead (No Cheating!)
 
 
